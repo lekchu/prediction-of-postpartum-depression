@@ -1,12 +1,3 @@
-Okay, let's adjust the background colors to shades of blue to make your app even more visually appealing.
-
-I'll modify the `custom CSS` section at the top of your `app.py` to use a light blue for the main content area and a slightly deeper, soft blue for the sidebar.
-
-**Here's the updated `app.py` code with blue color scheme for the background.**
-
-**Remember to replace your *entire* `app.py` file with this code on GitHub, and then redeploy your Streamlit app.**
-
-```python
 import streamlit as st
 import numpy as np
 import joblib
