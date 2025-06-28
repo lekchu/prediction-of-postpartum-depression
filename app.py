@@ -7,14 +7,23 @@ Original file is located at
     https://colab.research.google.com/drive/1y8-1w7T4q10Jv0GAkrZ0xTe87SD_TdM7
 """
 
-
-
 import streamlit as st
+# All your other imports go here...
 import numpy as np
 import joblib
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
+
+# --- Configuration (This should be the FIRST Streamlit command) ---
+st.set_page_config(
+    page_title="PPD Risk Predictor", # This is the title you see in your browser tab
+    page_icon="🧠", # This is the little emoji icon in the browser tab
+    layout="centered", # This makes your page content centered, or you can use "wide"
+    initial_sidebar_state="auto" # If you add a sidebar later, this controls it
+)
+
+# ... (the rest of your code starts from here, like loading the model)
 
 # Load trained model and label encoder
 model = joblib.load('ppd_model_pipeline.pkl')
