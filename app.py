@@ -4,8 +4,7 @@ import joblib
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
-import bcrypt # New import for password hashing
-
+import bcrypt # <--- THIS NEW IMPORT IS CRUCIAL
 # --- Configuration (This should be the FIRST Streamlit command) ---
 st.set_page_config(
     page_title="PPD Risk Predictor",
