@@ -4,72 +4,15 @@ import joblib
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
-import bcrypt
+import bcrypt # This is now correctly included because you added it to requirements.txt
 
 # --- Configuration (This should be the FIRST Streamlit command) ---
 st.set_page_config(
     page_title="PPD Risk Predictor",
     page_icon="🧠",
     layout="centered",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="auto"
 )
-
-# --- Custom CSS for enhanced aesthetics (BLUE SHADES) ---
-st.markdown("""
-<style>
-    /* Main app background - Very light blue */
-    .reportview-container {
-        background: #e3f2fd; /* Lightest blue (e.g., from Material Design Blue 50) */
-    }
-    .main .block-container {
-        padding-top: 2rem; /* Reduce top padding */
-        padding-bottom: 2rem;
-        padding-left: 2rem;
-        padding-right: 2rem;
-    }
-    /* Sidebar background - Slightly deeper light blue */
-    .st-emotion-cache-1wvz7m { /* Streamlit's auto-generated class for sidebar background */
-        background-color: #bbdefb; /* Light blue (e.g., Material Design Blue 100) */
-    }
-    .sidebar .sidebar-content {
-        background-color: #bbdefb; /* Ensure compatibility for older versions/different setups */
-    }
-    h1 {
-        color: #1565c0; /* Darker blue for main title for good contrast */
-        text-align: center;
-    }
-    h2, h3, h4, h5, h6 {
-        color: #2196f3; /* Medium blue for other headers */
-    }
-    .css-10jb6m0 { /* Card-like background for main content - keep it white for contrast */
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-    }
-    .stButton>button {
-        background-color: #4CAF50; /* Green button - can change to blue if preferred, e.g., #2196f3 */
-        color: white;
-        border-radius: 8px;
-        padding: 10px 24px;
-        border: none;
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-    }
-    .stButton>button:hover {
-        background-color: #45a049; /* Darker green on hover */
-    }
-    .stTextInput>div>div>input {
-        border-radius: 8px;
-        border: 1px solid #90caf9; /* Light blue border for inputs */
-    }
-    .stSelectbox>div>div>div {
-        border-radius: 8px;
-        border: 1px solid #90caf9; /* Light blue border for selectboxes */
-    }
-</style>
-""", unsafe_allow_html=True)
-
 
 # --- Global Variables / Model Loading ---
 # User data file
@@ -110,20 +53,16 @@ def check_password(password, hashed_password):
 
 # --- Login/Signup Page Functions ---
 def show_login_page():
-    st.sidebar.subheader("Account Access 🔑")
+    st.sidebar.subheader("Account Access")
+    # Added a unique key here
     choice = st.sidebar.radio("Go to", ["Login", "Signup"], key="login_signup_radio")
 
     users_df = load_users()
 
-    # Add an image or graphic to the login/signup page
-    # IMPORTANT: Ensure 'ppd_banner.png' is in your GitHub repo in the same folder as app.py
-    # Or replace with a direct URL to an image if hosted elsewhere.
-    st.image("ppd_banner.png", use_column_width=True, caption="Welcome to PPD Risk Predictor")
-
     if choice == "Login":
-        st.subheader("Login to Your Account 🚀")
-        username = st.text_input("Username 👇")
-        password = st.text_input("Password 🔒", type="password")
+        st.subheader("Login to Your Account")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
 
         if st.button("Login"):
             if username in users_df['username'].values:
@@ -132,35 +71,37 @@ def show_login_page():
                     st.session_state['logged_in'] = True
                     st.session_state['username'] = username
                     st.session_state['user_age'] = users_df[users_df['username'] == username]['age'].iloc[0] # Store user's age
-                    st.success(f"Welcome, {username}! 🎉")
+                    st.success(f"Welcome, {username}!")
                     st.rerun() # Rerun to switch to the main app
                 else:
-                    st.error("Incorrect password. 🚫")
+                    st.error("Incorrect password.")
             else:
-                st.error("Username not found. 🤔")
+                st.error("Username not found.")
 
     elif choice == "Signup":
-        st.subheader("Create a New Account ✨")
-        new_username = st.text_input("Choose a Username 👇")
-        new_password = st.text_input("Create a Password 🔒", type="password")
-        confirm_password = st.text_input("Confirm Password 🔒", type="password")
-        new_age = st.slider("Your Age 🎂", 18, 45, 25) # User can select age during signup
+        st.subheader("Create a New Account")
+        new_username = st.text_input("Choose a Username")
+        new_password = st.text_input("Create a Password", type="password")
+        confirm_password = st.text_input("Confirm Password", type="password")
+        new_age = st.slider("Your Age", 18, 45, 25) # User can select age during signup
 
         if st.button("Signup"):
             if not new_username or not new_password or not confirm_password:
-                st.warning("All fields are required. ⚠️")
+                st.warning("All fields are required.")
             elif new_username in users_df['username'].values:
-                st.error("Username already exists. Please choose a different one. ❌")
+                st.error("Username already exists. Please choose a different one.")
             elif new_password != confirm_password:
-                st.error("Passwords do not match. 🚫")
+                st.error("Passwords do not match.")
             else:
                 hashed_pw = hash_password(new_password)
                 new_user_data = pd.DataFrame([{'username': new_username, 'hashed_password': hashed_pw, 'age': new_age}])
                 updated_users_df = pd.concat([users_df, new_user_data], ignore_index=True)
                 save_users(updated_users_df)
-                st.success("Account created successfully! Please login. ✅")
+                st.success("Account created successfully! Please login.")
+                # Automatically switch to login page after successful signup
+                # Set the value to 'Login'
                 st.session_state['login_signup_radio'] = "Login"
-                st.rerun()
+                st.rerun() # Re-run to update the sidebar radio button
 
 
 # --- Main Application Logic (Conditional Display) ---
@@ -175,22 +116,18 @@ if st.session_state['logged_in']:
     st.title("Postpartum Depression Risk Predictor 🧠")
 
     # --- Logout button (in sidebar for convenience) ---
-    if st.sidebar.button("Logout 🚪"):
+    if st.sidebar.button("Logout"):
         st.session_state['logged_in'] = False
         st.session_state['username'] = None
         st.session_state['user_age'] = None # Clear stored age on logout
         st.rerun()
 
-    st.sidebar.markdown(f"Logged in as: **{st.session_state['username']}** 👋")
+    st.sidebar.markdown(f"Logged in as: **{st.session_state['username']}**")
     st.sidebar.markdown(f"Age: **{st.session_state['user_age']}**")
-
-    # Add a graphic to the main page
-    # IMPORTANT: Ensure 'health_graphic.png' is in your GitHub repo in the same folder as app.py
-    st.image("health_graphic.png", use_column_width=True, caption="Understanding your mental well-being")
 
 
     with st.container():
-        st.header("About This Tool ℹ️", divider="gray")
+        st.header("About This Tool", divider="gray")
         st.markdown("""
         This application is designed to **assess and predict the risk levels** of postpartum depression (PPD)
         using a machine learning model trained on questionnaire responses and demographic inputs.
@@ -210,7 +147,7 @@ if st.session_state['logged_in']:
     st.write("---") # Visual separator
 
     # --- User Input Section ---
-    st.header("Your Information 📝", divider="blue")
+    st.header("Your Information", divider="blue")
 
     # Demographics in columns for a cleaner look
     col1, col2 = st.columns(2)
@@ -218,20 +155,20 @@ if st.session_state['logged_in']:
         # Age will now be pre-filled from signup, but user can change it if they want
         Age = st.slider("1. Age", 18, 45, st.session_state['user_age'], help="Your current age.")
     with col2:
-        is_pregnant = st.selectbox("2. Are you currently pregnant? 🤰", ["Select...", "Yes", "No"], index=0)
-        has_given_birth_recently = st.selectbox("3. Have you given birth recently? 👶", ["Select...", "Yes", "No"], index=0)
+        is_pregnant = st.selectbox("2. Are you currently pregnant?", ["Select...", "Yes", "No"], index=0)
+        has_given_birth_recently = st.selectbox("3. Have you given birth recently?", ["Select...", "Yes", "No"], index=0)
 
     # Input validation for these selectboxes
     if is_pregnant == "Select..." or has_given_birth_recently == "Select...":
-        st.warning("Please select an option for questions 2 and 3. ⚠️")
+        st.warning("Please select an option for questions 2 and 3.")
 
-    FamilySupport = st.selectbox("4. Do you have Family Support? 👨‍👩‍👧‍👦", ["Select...", "Low", "Medium", "High"], index=0)
+    FamilySupport = st.selectbox("4. Do you have Family Support?", ["Select...", "Low", "Medium", "High"], index=0)
     if FamilySupport == "Select...":
-        st.warning("Please select an option for family support. ⚠️")
+        st.warning("Please select an option for family support.")
 
 
     st.write("---") # Another separator line
-    st.header("Edinburgh Postnatal Depression Scale (EPDS) Questionnaire 📋", divider="orange")
+    st.header("Edinburgh Postnatal Depression Scale (EPDS) Questionnaire", divider="orange")
     st.markdown("""
     Please answer the following questions based on how you have felt **over the past 7 days**.
     Choose the answer that comes closest to how you have been feeling.
@@ -252,16 +189,16 @@ if st.session_state['logged_in']:
     }
 
     # Collect all question responses (your existing selectboxes, but make sure to use Q_responses)
-    Q1 = st.selectbox("1. I have been able to laugh and see the funny side of things. 😂", list(Q_responses["Q1"].keys()))
-    Q2 = st.selectbox("2. I have looked forward with enjoyment to things. 😊", list(Q_responses["Q2"].keys()))
-    Q3 = st.selectbox("3. I have blamed myself unnecessarily when things went wrong. 😔", list(Q_responses["Q3"].keys()))
-    Q4 = st.selectbox("4. I have been anxious or worried for no good reason. 😟", list(Q_responses["Q4"].keys()))
-    Q5 = st.selectbox("5. I have felt scared or panicky for no very good reason. 😨", list(Q_responses["Q5"].keys()))
-    Q6 = st.selectbox("6. Things have been getting on top of me. 😩", list(Q_responses["Q6"].keys()))
-    Q7 = st.selectbox("7. I have been so unhappy that I have had difficulty sleeping. 😴", list(Q_responses["Q7"].keys()))
-    Q8 = st.selectbox("8. I have felt sad or miserable. 😞", list(Q_responses["Q8"].keys()))
-    Q9 = st.selectbox("9. I have been so unhappy that I have been crying. 😭", list(Q_responses["Q9"].keys()))
-    Q10 = st.selectbox("10. The thought of harming myself has occurred to me. 🔪", list(Q_responses["Q10"].keys()))
+    Q1 = st.selectbox("1. I have been able to laugh and see the funny side of things.", list(Q_responses["Q1"].keys()))
+    Q2 = st.selectbox("2. I have looked forward with enjoyment to things", list(Q_responses["Q2"].keys()))
+    Q3 = st.selectbox("3. I have blamed myself unnecessarily when things went wrong", list(Q_responses["Q3"].keys()))
+    Q4 = st.selectbox("4. I have been anxious or worried for no good reason", list(Q_responses["Q4"].keys()))
+    Q5 = st.selectbox("5. I have felt scared or panicky for no very good reason", list(Q_responses["Q5"].keys()))
+    Q6 = st.selectbox("6. Things have been getting on top of me", list(Q_responses["Q6"].keys()))
+    Q7 = st.selectbox("7. I have been so unhappy that I have had difficulty sleeping", list(Q_responses["Q7"].keys()))
+    Q8 = st.selectbox("8. I have felt sad or miserable", list(Q_responses["Q8"].keys()))
+    Q9 = st.selectbox("9. I have been so unhappy that I have been crying", list(Q_responses["Q9"].keys()))
+    Q10 = st.selectbox("10. The thought of harming myself has occurred to me", list(Q_responses["Q10"].keys()))
 
     # Get numerical values
     q1_val = Q_responses["Q1"][Q1]
@@ -280,12 +217,12 @@ if st.session_state['logged_in']:
     # --- Prediction Button and Logic ---
     st.write("---")
     # Add a button to trigger prediction, making it more explicit
-    if st.button("Predict PPD Risk 📊", type="primary"):
+    if st.button("Predict PPD Risk", type="primary"):
         # Perform input validation before proceeding with prediction
         if (is_pregnant == "Select..." or
             has_given_birth_recently == "Select..." or
             FamilySupport == "Select..."):
-            st.error("Please ensure all demographic questions are answered before predicting. 🚨")
+            st.error("Please ensure all demographic questions are answered before predicting.")
         else:
             input_data = pd.DataFrame([{
                 "Age": Age, # Use the Age from the slider
@@ -307,28 +244,28 @@ if st.session_state['logged_in']:
                 prediction_encoded = model.predict(input_data)[0]
                 prediction_label = le.inverse_transform([prediction_encoded])[0]
 
-                st.subheader("Prediction Results 🎉")
+                st.subheader("Prediction Results")
                 risk_color = "green"
                 feedback = "" # Initialize feedback message
                 if prediction_label == "Mild":
                     risk_color = "green"
-                    feedback = "Your responses indicate a **Mild** risk. Remember, early support can be beneficial. Consider discussing your feelings with a trusted person or healthcare professional if concerns arise. 💚"
+                    feedback = "Your responses indicate a **Mild** risk. Remember, early support can be beneficial. Consider discussing your feelings with a trusted person or healthcare professional if concerns arise."
                 elif prediction_label == "Moderate":
                     risk_color = "orange"
-                    feedback = "Your responses indicate a **Moderate** risk. It's highly recommended to speak with a healthcare provider or mental health professional for further evaluation and support. 🧡"
+                    feedback = "Your responses indicate a **Moderate** risk. It's highly recommended to speak with a healthcare provider or mental health professional for further evaluation and support."
                 elif prediction_label == "Severe":
                     risk_color = "red"
-                    feedback = "Your responses indicate a **Severe** risk. Please seek immediate professional medical advice. Support is available, and you don't have to go through this alone. ❤️"
+                    feedback = "Your responses indicate a **Severe** risk. Please seek immediate professional medical advice. Support is available, and you don't have to go through this alone."
                 elif prediction_label == "Profound":
                     risk_color = "darkred" # Streamlit doesn't have a direct 'darkred' but it works with custom HTML
-                    feedback = "Your responses indicate a **Profound** risk. This is a critical indicator. Please seek immediate professional medical attention. Reach out to an emergency service or mental health crisis line if you are in distress. 🚨"
+                    feedback = "Your responses indicate a **Profound** risk. This is a critical indicator. Please seek immediate professional medical attention. Reach out to an emergency service or mental health crisis line if you are in distress."
 
                 # Display predicted risk with dynamic color
                 st.markdown(f"**Predicted Postpartum Depression Risk:** <span style='color:{risk_color}; font-size: 24px; font-weight: bold;'>{prediction_label}</span>", unsafe_allow_html=True)
                 st.info(feedback) # Display the feedback message
 
                 st.write("---")
-                st.subheader("Risk Level Visualization 📊")
+                st.subheader("Risk Level Visualization")
                 # Customize the bar chart for better presentation
                 fig, ax = plt.subplots(figsize=(6, 4))
                 ax.bar([prediction_label], [prediction_encoded], color=risk_color) # Use the color from above
@@ -341,17 +278,16 @@ if st.session_state['logged_in']:
                 st.pyplot(fig)
 
                 # Optional: Display EPDS Score
-                st.info(f"Your calculated EPDS Score: **{score}** (Max: 30) 🎯")
+                st.info(f"Your calculated EPDS Score: **{score}** (Max: 30)")
 
             except Exception as e:
-                st.error(f"An error occurred during prediction: {e}. Please check your model pipeline. 🛑")
+                st.error(f"An error occurred during prediction: {e}. Please check your model pipeline.")
 
     else:
-        st.info("Click 'Predict PPD Risk' to see your results. ▶️")
+        st.info("Click 'Predict PPD Risk' to see your results.")
 
     # --- End of your main app.py content (this marks the end of the logged-in section) ---
 
 else:
     # Show the login/signup page if not logged in
     show_login_page()
-```
