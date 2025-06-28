@@ -4,7 +4,7 @@ import joblib
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
-import bcrypt # New import for password hashing
+import bcrypt # This is now correctly included because you added it to requirements.txt
 
 # --- Configuration (This should be the FIRST Streamlit command) ---
 st.set_page_config(
@@ -99,8 +99,8 @@ def show_login_page():
                 save_users(updated_users_df)
                 st.success("Account created successfully! Please login.")
                 # Automatically switch to login page after successful signup
-                # Added a unique key here too, to prevent duplication error
-                st.session_state['login_signup_radio'] = "Login" # Set the value to 'Login'
+                # Set the value to 'Login'
+                st.session_state['login_signup_radio'] = "Login"
                 st.rerun() # Re-run to update the sidebar radio button
 
 
