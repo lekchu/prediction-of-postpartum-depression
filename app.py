@@ -24,7 +24,7 @@ try:
     le = joblib.load('label_encoder.pkl')
 except FileNotFoundError:
     st.error("Error: Model or label encoder files not found. Please ensure 'ppd_model_pipeline.pkl' and 'label_encoder.pkl' are in the same directory.")
-    st.stop()
+    st.stop() # This stops the app if the files aren't there, so it doesn't crash later
 
 # --- Functions for User Management ---
 
@@ -107,8 +107,7 @@ if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 
 if st.session_state['logged_in']:
-    # --- Start of your original app.py content (AFTER the initial model loading) ---
-    # This entire block will only show if the user is logged in.
+    # --- Start of your main app.py content that shows when logged in ---
 
     st.title("Postpartum Depression Risk Predictor 🧠")
 
@@ -127,7 +126,7 @@ if st.session_state['logged_in']:
         st.header("About This Tool", divider="gray")
         st.markdown("""
         This application is designed to **assess and predict the risk levels** of postpartum depression (PPD)
-        using a machine machine learning model trained on questionnaire responses and demographic inputs.
+        using a machine learning model trained on questionnaire responses and demographic inputs.
 
         It aims to provide:
         * **Insights** into potential mental health conditions.
@@ -150,7 +149,6 @@ if st.session_state['logged_in']:
     col1, col2 = st.columns(2)
     with col1:
         # Age will now be pre-filled from signup, but user can change it if they want
-        # You can choose to make this st.number_input if you want them to type
         Age = st.slider("1. Age", 18, 45, st.session_state['user_age'], help="Your current age.")
     with col2:
         is_pregnant = st.selectbox("2. Are you currently pregnant?", ["Select...", "Yes", "No"], index=0)
@@ -165,14 +163,18 @@ if st.session_state['logged_in']:
         st.warning("Please select an option for family support.")
 
 
-    st.write("---")
+    ##### START OF NEW CODE FOR QUESTIONNAIRE/PREDICTION SECTION #####
+    # This entire block below replaces your old Q1_response dictionaries,
+    # all Q1-Q10 selectboxes, score calculation, and the entire prediction/chart display.
+
+    st.write("---") # Another separator line
     st.header("Edinburgh Postnatal Depression Scale (EPDS) Questionnaire", divider="orange")
     st.markdown("""
     Please answer the following questions based on how you have felt **over the past 7 days**.
     Choose the answer that comes closest to how you have been feeling.
     """)
 
-    # Define responses once (cleaner code)
+    # Define responses once (cleaner code, replacing your individual Q1_response etc.)
     Q_responses = {
         "Q1": {"As much as I always could": 0, "Not quite so much now": 1, "Definitely not so much now": 2, "Not at all": 3},
         "Q2": {"As much as I ever did": 0, "Rather less than I used to": 1, "Definitely less than I used to": 2, "Hardly at all": 3},
@@ -186,6 +188,7 @@ if st.session_state['logged_in']:
         "Q10": {"Yes, quite often": 3, "Sometimes": 2, "Hardly ever": 1, "Never": 0}
     }
 
+    # Collect all question responses (your existing selectboxes, but make sure to use Q_responses)
     Q1 = st.selectbox("1. I have been able to laugh and see the funny side of things.", list(Q_responses["Q1"].keys()))
     Q2 = st.selectbox("2. I have looked forward with enjoyment to things", list(Q_responses["Q2"].keys()))
     Q3 = st.selectbox("3. I have blamed myself unnecessarily when things went wrong", list(Q_responses["Q3"].keys()))
@@ -197,6 +200,7 @@ if st.session_state['logged_in']:
     Q9 = st.selectbox("9. I have been so unhappy that I have been crying", list(Q_responses["Q9"].keys()))
     Q10 = st.selectbox("10. The thought of harming myself has occurred to me", list(Q_responses["Q10"].keys()))
 
+    # Get numerical values
     q1_val = Q_responses["Q1"][Q1]
     q2_val = Q_responses["Q2"][Q2]
     q3_val = Q_responses["Q3"][Q3]
@@ -212,6 +216,7 @@ if st.session_state['logged_in']:
 
     # --- Prediction Button and Logic ---
     st.write("---")
+    # Add a button to trigger prediction, making it more explicit
     if st.button("Predict PPD Risk", type="primary"):
         # Perform input validation before proceeding with prediction
         if (is_pregnant == "Select..." or
@@ -221,7 +226,7 @@ if st.session_state['logged_in']:
         else:
             input_data = pd.DataFrame([{
                 "Age": Age, # Use the Age from the slider
-                "FamilySupport": FamilySupport,
+                "FamilySupport": FamilySupport, # Your model's pipeline should handle this categorical feature
                 "Q1": q1_val,
                 "Q2": q2_val,
                 "Q3": q3_val,
@@ -241,7 +246,7 @@ if st.session_state['logged_in']:
 
                 st.subheader("Prediction Results")
                 risk_color = "green"
-                feedback = ""
+                feedback = "" # Initialize feedback message
                 if prediction_label == "Mild":
                     risk_color = "green"
                     feedback = "Your responses indicate a **Mild** risk. Remember, early support can be beneficial. Consider discussing your feelings with a trusted person or healthcare professional if concerns arise."
@@ -252,24 +257,27 @@ if st.session_state['logged_in']:
                     risk_color = "red"
                     feedback = "Your responses indicate a **Severe** risk. Please seek immediate professional medical advice. Support is available, and you don't have to go through this alone."
                 elif prediction_label == "Profound":
-                    risk_color = "darkred"
+                    risk_color = "darkred" # Streamlit doesn't have a direct 'darkred' but it works with custom HTML
                     feedback = "Your responses indicate a **Profound** risk. This is a critical indicator. Please seek immediate professional medical attention. Reach out to an emergency service or mental health crisis line if you are in distress."
 
+                # Display predicted risk with dynamic color
                 st.markdown(f"**Predicted Postpartum Depression Risk:** <span style='color:{risk_color}; font-size: 24px; font-weight: bold;'>{prediction_label}</span>", unsafe_allow_html=True)
-                st.info(feedback)
+                st.info(feedback) # Display the feedback message
 
                 st.write("---")
                 st.subheader("Risk Level Visualization")
+                # Customize the bar chart for better presentation
                 fig, ax = plt.subplots(figsize=(6, 4))
-                ax.bar([prediction_label], [prediction_encoded], color=risk_color)
-                ax.set_ylim([-0.5, 3.5])
+                ax.bar([prediction_label], [prediction_encoded], color=risk_color) # Use the color from above
+                ax.set_ylim([-0.5, 3.5]) # Adjust y-limits to accommodate 0 to 3 clearly
                 ax.set_yticks([0, 1, 2, 3])
                 ax.set_yticklabels(['Mild (0)', 'Moderate (1)', 'Severe (2)', 'Profound (3)'])
                 ax.set_ylabel("Risk Level")
                 ax.set_title("Predicted PPD Risk Level")
-                ax.grid(axis='y', linestyle='--', alpha=0.7)
+                ax.grid(axis='y', linestyle='--', alpha=0.7) # Add light grid lines
                 st.pyplot(fig)
 
+                # Optional: Display EPDS Score
                 st.info(f"Your calculated EPDS Score: **{score}** (Max: 30)")
 
             except Exception as e:
@@ -278,7 +286,9 @@ if st.session_state['logged_in']:
     else:
         st.info("Click 'Predict PPD Risk' to see your results.")
 
-    # --- End of your original app.py content ---
+    ##### END OF NEW CODE FOR QUESTIONNAIRE/PREDICTION SECTION #####
+
+    # --- End of your main app.py content (this marks the end of the logged-in section) ---
 
 else:
     # Show the login/signup page if not logged in
