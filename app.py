@@ -4,7 +4,8 @@ import joblib
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
-import bcrypt # <--- THIS NEW IMPORT IS CRUCIAL
+import bcrypt # New import for password hashing
+
 # --- Configuration (This should be the FIRST Streamlit command) ---
 st.set_page_config(
     page_title="PPD Risk Predictor",
@@ -53,7 +54,8 @@ def check_password(password, hashed_password):
 # --- Login/Signup Page Functions ---
 def show_login_page():
     st.sidebar.subheader("Account Access")
-    choice = st.sidebar.radio("Go to", ["Login", "Signup"])
+    # Added a unique key here
+    choice = st.sidebar.radio("Go to", ["Login", "Signup"], key="login_signup_radio")
 
     users_df = load_users()
 
@@ -97,7 +99,10 @@ def show_login_page():
                 save_users(updated_users_df)
                 st.success("Account created successfully! Please login.")
                 # Automatically switch to login page after successful signup
-                st.sidebar.radio("Go to", ["Login", "Signup"], index=0)
+                # Added a unique key here too, to prevent duplication error
+                st.session_state['login_signup_radio'] = "Login" # Set the value to 'Login'
+                st.rerun() # Re-run to update the sidebar radio button
+
 
 # --- Main Application Logic (Conditional Display) ---
 
@@ -161,10 +166,6 @@ if st.session_state['logged_in']:
     if FamilySupport == "Select...":
         st.warning("Please select an option for family support.")
 
-
-    ##### START OF NEW CODE FOR QUESTIONNAIRE/PREDICTION SECTION #####
-    # This entire block below replaces your old Q1_response dictionaries,
-    # all Q1-Q10 selectboxes, score calculation, and the entire prediction/chart display.
 
     st.write("---") # Another separator line
     st.header("Edinburgh Postnatal Depression Scale (EPDS) Questionnaire", divider="orange")
@@ -284,8 +285,6 @@ if st.session_state['logged_in']:
 
     else:
         st.info("Click 'Predict PPD Risk' to see your results.")
-
-    ##### END OF NEW CODE FOR QUESTIONNAIRE/PREDICTION SECTION #####
 
     # --- End of your main app.py content (this marks the end of the logged-in section) ---
 
