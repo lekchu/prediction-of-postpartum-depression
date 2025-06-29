@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -15,7 +16,7 @@ if 'demographics' not in st.session_state or \
    'model' not in st.session_state or \
    'le' not in st.session_state:
     st.warning("It looks like you haven't completed the questionnaire. Please start from the Home page. ↩️")
-    st.markdown("[Go to Home Page](/Home)")
+    st.page_link("pages/0_Home.py", label="Go to Home Page") # Link to the new Home page
     st.stop() # Stop execution if data is missing
 
 # Load data from session state
@@ -30,8 +31,9 @@ with st.expander("Show Demographics"):
     st.json(demographics) # Display demographics in a clean JSON format
 with st.expander("Show EPDS Answers"):
     # Display EPDS answers in a more readable format
+    epds_questions = st.session_state.get('epds_questions_list', [f"Question {i+1}." for i in range(10)])
     for i, (q_key, answer) in enumerate(epds_answers.items()):
-        question_text_short = st.session_state.get('epds_questions_list', [f"Question {i+1}." for i in range(10)])[i]
+        question_text_short = epds_questions[i] if i < len(epds_questions) else f"Question {i+1}."
         st.markdown(f"**{i+1}. {question_text_short}:** {answer}")
     st.markdown(f"**Total EPDS Score:** {epds_score}")
 
@@ -40,21 +42,48 @@ st.write("---")
 # --- Perform Prediction ---
 st.header("Prediction Analysis 🧠", divider="orange")
 
+# Validate EPDS answers before creating input_data (FIX for KeyError)
+all_epds_answered_validly = True
+epds_numerical_values = {}
+for i in range(1, 11):
+    q_key = f"Q{i}"
+    selected_option = epds_answers.get(q_key) # Use .get() to avoid KeyError if key is missing
+    if selected_option is None or selected_option not in Q_RESPONSES[q_key]:
+        all_epds_answered_validly = False
+        break
+    epds_numerical_values[q_key] = Q_RESPONSES[q_key][selected_option]
+
+if not all_epds_answered_validly:
+    st.error("It seems some questionnaire answers are missing or invalid. Please retake the questionnaire. 🚨")
+    if st.button("Retake Questionnaire 🔄"):
+        st.session_state.current_q_index = 0
+        st.session_state.epds_answers = {f"Q{i}": None for i in range(1, 11)}
+        st.session_state.demographics = {
+            'Age': 25,
+            'is_pregnant': "Select...",
+            'has_given_birth_recently': "Select...",
+            'FamilySupport': "Select..."
+        }
+        st.page_link("pages/1_Questionnaire.py", label="Go to Questionnaire") # Link to the questionnaire page
+        st.stop()
+    st.stop()
+
+
 # Prepare input data for the model
 input_data = pd.DataFrame([{
     "Age": demographics['Age'],
     "FamilySupport": demographics['FamilySupport'],
-    "Q1": Q_RESPONSES["Q1"][epds_answers["Q1"]],
-    "Q2": Q_RESPONSES["Q2"][epds_answers["Q2"]],
-    "Q3": Q_RESPONSES["Q3"][epds_answers["Q3"]],
-    "Q4": Q_RESPONSES["Q4"][epds_answers["Q4"]],
-    "Q5": Q_RESPONSES["Q5"][epds_answers["Q5"]],
-    "Q6": Q_RESPONSES["Q6"][epds_answers["Q6"]],
-    "Q7": Q_RESPONSES["Q7"][epds_answers["Q7"]],
-    "Q8": Q_RESPONSES["Q8"][epds_answers["Q8"]],
-    "Q9": Q_RESPONSES["Q9"][epds_answers["Q9"]],
-    "Q10": Q_RESPONSES["Q10"][epds_answers["Q10"]],
-    "EPDS_Score": epds_score
+    "Q1": epds_numerical_values["Q1"], # Use the validated numerical values
+    "Q2": epds_numerical_values["Q2"],
+    "Q3": epds_numerical_values["Q3"],
+    "Q4": epds_numerical_values["Q4"],
+    "Q5": epds_numerical_values["Q5"],
+    "Q6": epds_numerical_values["Q6"],
+    "Q7": epds_numerical_values["Q7"],
+    "Q8": epds_numerical_values["Q8"],
+    "Q9": epds_numerical_values["Q9"],
+    "Q10": epds_numerical_values["Q10"],
+    "EPDS_Score": epds_score # This should also be correct if all answers are valid
 }])
 
 try:
@@ -123,9 +152,9 @@ with col_footer1:
             'has_given_birth_recently': "Select...",
             'FamilySupport': "Select..."
         }
-        st.markdown("[Go to Questionnaire](/Questionnaire)") # Navigate back to start
+        st.page_link("pages/1_Questionnaire.py", label="Go to Questionnaire") # Navigate back to start
         st.stop()
 with col_footer2:
     if st.button("Back to Home Page 🏠"):
-        st.markdown("[Go to Home Page](/Home)") # Navigate back to home
+        st.page_link("pages/0_Home.py", label="Go to Home Page") # Navigate back to home
         st.stop()
