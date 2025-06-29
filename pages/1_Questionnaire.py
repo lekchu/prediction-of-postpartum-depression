@@ -7,7 +7,7 @@ set_page_style()
 st.title("PPD Risk Questionnaire 📝")
 st.markdown("Please answer the following questions honestly to help us assess your risk.")
 
-# Ensure models are loaded from session_state (they should be loaded by app.py)
+# Ensure models are loaded from session_state (they should be loaded by root app.py)
 if 'model' not in st.session_state or 'le' not in st.session_state:
     st.error("Error: Model not loaded. Please go back to the Home page and refresh. 🛑")
     st.stop()
@@ -63,6 +63,10 @@ epds_questions = [
 ]
 num_epds_questions = len(epds_questions)
 
+# Store epds_questions in session state for Results page
+st.session_state['epds_questions_list'] = epds_questions
+
+
 # Progress bar
 progress_percent = (st.session_state.current_q_index / num_epds_questions) * 100
 st.progress(int(progress_percent), text=f"Progress: {st.session_state.current_q_index}/{num_epds_questions} questions answered")
@@ -76,7 +80,12 @@ if st.session_state.current_q_index < num_epds_questions:
     # Get the previously selected answer for this question, if any
     current_answer_index = 0
     if st.session_state.epds_answers[q_key] is not None:
-        current_answer_index = options.index(st.session_state.epds_answers[q_key])
+        try:
+            current_answer_index = options.index(st.session_state.epds_answers[q_key])
+        except ValueError:
+            # If the stored answer is not in options (e.g., from an old version), reset to 0
+            current_answer_index = 0
+
 
     selected_option = st.selectbox(
         f"{st.session_state.current_q_index + 1}. {question_text}",
@@ -100,22 +109,22 @@ else:
     st.success("All questions answered! 🎉")
     st.markdown("You can now proceed to see your predicted PPD risk.")
 
-    if st.button("View My PPD Risk! 📊", use_container_width=True, type="primary", disabled=not demographics_valid):
-        # Calculate total EPDS score
-        total_epds_score = 0
-        all_epds_answered = True
-        for i in range(1, 11):
-            q_key = f"Q{i}"
-            answer = st.session_state.epds_answers[q_key]
-            if answer is None: # Should not happen if 'Next' button is correctly disabled
-                all_epds_answered = False
-                break
-            total_epds_score += Q_RESPONSES[q_key][answer]
+    # Calculate total EPDS score
+    total_epds_score = 0
+    all_epds_answered_validly = True
+    for i in range(1, 11):
+        q_key = f"Q{i}"
+        answer = st.session_state.epds_answers.get(q_key)
+        if answer is None or answer not in Q_RESPONSES[q_key]:
+            all_epds_answered_validly = False
+            break
+        total_epds_score += Q_RESPONSES[q_key][answer]
 
-        if all_epds_answered and demographics_valid:
+    if st.button("View My PPD Risk! 📊", use_container_width=True, type="primary", disabled=not (demographics_valid and all_epds_answered_validly)):
+        if all_epds_answered_validly and demographics_valid:
             st.session_state.epds_score = total_epds_score
             # Navigate to the results page
-            st.markdown("[Click here to go to Results](/Results)")
+            st.page_link("pages/2_Results.py", label="Go to Results", icon="📊")
             st.stop()
         else:
             st.error("Please ensure all questions are answered and demographics are selected. 🚨")
