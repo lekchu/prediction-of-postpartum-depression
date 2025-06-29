@@ -1,6 +1,0 @@
-[main]
-# This line hides the "App" entry for the root app.py if other pages are present.
-# It effectively makes your 0_Home.py the de facto entry point in the sidebar.
-# Note: This is an undocumented feature and might change in future Streamlit versions.
-# For now, it's the common workaround to remove the 'App' label.
-hideSidebarNav = false
