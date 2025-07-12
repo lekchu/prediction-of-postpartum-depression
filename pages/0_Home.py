@@ -1,57 +1,69 @@
 import streamlit as st
-from utils import set_page_style # Import our shared styling function
+import base64
+from streamlit_extras.switch_page_button import switch_page
 
-# Apply consistent page style
-set_page_style()
+# Set page config
+st.set_page_config(page_title="Postpartum Depression Predictor", layout="wide")
 
-# Ensure models are loaded from session state (they should be loaded by root app.py)
-if 'model' not in st.session_state or 'le' not in st.session_state:
-    st.error("Model not loaded. Please go back to the app's main URL and refresh. 🛑")
-    st.stop()
+# --- Background Image ---
+def get_base64_bg(image_file):
+    with open(image_file, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
-# --- Home Page Content ---
+def set_background(image_file):
+    bg = get_base64_bg(image_file)
+    st.markdown(f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/png;base64,{bg}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }}
+        </style>
+    """, unsafe_allow_html=True)
+
+set_background("assets/background.png")
+
+# --- Page Content ---
 st.title("Welcome to the PPD Risk Predictor 🏡")
 
 # Add a striking image at the top
 try:
-    st.image("ppd_banner.png", use_column_width=True, caption="Supporting new mothers and families")
+    st.image("assets/mom_baby.png", use_column_width=False, width=300, caption="Supporting new mothers and families")
 except Exception:
-    st.warning("💡 Tip: Add 'ppd_banner.png' to your repository for a beautiful header image!")
+    st.warning("💡 Add 'assets/mom_baby.png' for header image.")
 
+# Introduction
 st.markdown("""
 <div style="background-color:white; padding:20px; border-radius:10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);">
     <h2 style="color:#2196f3;">Understand Your Well-being 🌟</h2>
-    <p>This application is designed to help **assess potential risk levels** for postpartum depression (PPD)
-    using a machine learning model. It's built to be a supportive tool, providing insights based on your responses.</p>
+    <p>This tool helps assess potential risk levels for postpartum depression (PPD)
+    using the clinically validated Edinburgh Postnatal Depression Scale (EPDS) and a machine learning model.</p>
 
-    <h3>What You'll Find:</h3>
+    <h3>What You'll Get:</h3>
     <ul>
-        <li>A guided questionnaire to gather relevant information.</li>
-        <li>Personalized risk predictions: <i>Mild</i>, <i>Moderate</i>, <i>Severe</i>, or <i>Profound</i>.</li>
-        <li>Helpful feedback and guidance based on the assessment.</li>
+        <li>10-question step-by-step assessment</li>
+        <li>Personalized risk prediction: Low / Moderate / High</li>
+        <li>Confidential, instant feedback</li>
     </ul>
 </div>
 """, unsafe_allow_html=True)
 
-st.write("---") # Visual separator
+st.write("---")
 
+# Motivation
 st.subheader("Why Use This Tool? 🤔")
 st.markdown("""
-Navigating the postpartum period can be challenging. Our goal is to offer a confidential space
-where you can reflect on your feelings and gain a better understanding of your mental health.
-Early awareness is a powerful step towards seeking the right support.
+Postpartum depression affects many mothers, yet often goes undetected.
+This simple and supportive tool gives you an early snapshot of your emotional well-being.
 """)
 
 st.write("---")
 
-# Call to action to start the questionnaire
+# Start Button
 st.subheader("Ready to Begin? 👇")
-st.markdown("""
-Click the button below to start the questionnaire. Your responses are confidential and used only for the prediction.
-""")
+st.markdown("Click the button below to start the questionnaire. Your responses are private.")
 
-# Use a link button to navigate to the questionnaire page
-# Note: Streamlit's native multi-page links use the file name without extension
 if st.button("Start Questionnaire Now! 🚀", use_container_width=True):
-    st.page_link("pages/1_Questionnaire.py", label="Go to Questionnaire", icon="🚀") # This creates a clickable link
-    st.stop() # Stop execution of the current page
+    switch_page("2_Questionnaire")
